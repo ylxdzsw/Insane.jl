@@ -1,6 +1,6 @@
-The LispSyntax.jl package is licensed under the MIT "Expat" License:
+The Restful.jl package is licensed under the MIT License:
 
-> Copyright (c) 2014: Wade Shen.
+> Copyright (c) 2016: Zhang ShiWei.
 >
 > Permission is hereby granted, free of charge, to any person obtaining
 > a copy of this software and associated documentation files (the
