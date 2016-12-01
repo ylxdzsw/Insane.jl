@@ -1,42 +1,107 @@
-using ParserCombinator, Compat
-import Base.==
+type InsaneParser
+    code::String
+    i::Int64
 
-reader_table = Dict{Symbol, Function}()
+    InsaneParser(x::String) = new(x, 1, 1)
+end
 
-expr         = Delayed()
-floaty_dot   = p"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?[Ff]" > (x -> parse(Float32, x[1:end-1]))
-floaty_nodot = p"[-+]?[0-9]*[0-9]+([eE][-+]?[0-9]+)?[Ff]" > (x -> parse(Float32, x[1:end-1]))
-floaty       = floaty_dot | floaty_nodot
-white_space  = p"([\s\n\r]*(?<!\\);[^\n\r$]+[\n\r\s$]*|[\s\n\r]+)"
-opt_ws       = white_space | e""
+abstract Token
 
-doubley      = p"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?[dD]" > (x -> parse(Float64, x[1:end-1]))
+immutable Atom <: Token
+    t::Symbol
+    name::String
+end
 
-inty         = p"[-+]?\d+" > (x -> parse(Int, x))
+immutable JuliaExpr <: Token
+    expr::Any
+end
 
-uchary       = p"\\(u[\da-fA-F]{4})" > (x -> begin y = unescape_string(x); y[chr2ind(y, 1)] end)
-achary       = p"\\[0-7]{3}" > (x -> unescape_string(x)[1])
-chary        = p"\\." > (x -> x[2])
+immutable S_Expr <: Token
+    head::Symbol
+    args::Vector{Token}
+end
 
-stringy      = p"(?<!\\)\".*?(?<!\\)\"" > (x -> x[2:end-1]) #_0[2:end-1] } #r"(?<!\\)\".*?(?<!\\)"
-booly        = p"(true|false)" > (x -> x == "true" ? true : false)
-symboly      = p"[^\d(){}#'`,@~;~\[\]^\s][^\s()#'`,@~;^{}~\[\]]*" > symbol
-macrosymy    = p"@[^\d(){}#'`,@~;~\[\]^\s][^\s()#'`,@~;^{}~\[\]]*" > symbol
+function parse_expr!(p::InsaneParser)
+    c, i = next(p.code, p.i)
 
-sexpr        = E"(" + ~opt_ws + Repeat(expr + ~opt_ws) + E")" |> (x -> s_expr(x))
-hashy        = E"#{" + ~opt_ws + Repeat(expr + ~opt_ws) + E"}" |> (x -> Set(x))
-curly        = E"{" + ~opt_ws + Repeat(expr + ~opt_ws) + E"}" |> (x -> [ x[i] => x[i+1] for i = 1:2:length(x) ])
-dispatchy    = E"#" + symboly + ~opt_ws + expr |> (x -> reader_table[x[1]](x[2]))
-bracket      = E"[" + ~opt_ws + Repeat(expr + ~opt_ws) + E"]" |> (x -> s_expr(x)) # TODO: not quite right
-quot         = E"'" + expr > (x -> sx(:quote, x))
-quasi        = E"`" + expr > (x -> sx(:quasi, x))
-tildeseq     = E"~@" + expr > (x -> sx(:splice_seq, x))
-tilde        = E"~" + expr > (x -> sx(:splice, x))
+    if isnumber(c)
+        return parse_number!(p)
+    elseif c == ':'
+        return parse_symbol!(p)
+    elseif c == '\''
+        return parse_quote!(p)
+    elseif c == '{'
+        throw(ParseError("expected '{'"))
+    end
 
-expr.matcher = Nullable{ParserCombinator.Matcher}(doubley | floaty | inty | uchary | achary | chary | stringy | booly | symboly | macrosymy | dispatchy |
-                                                  sexpr | hashy | curly | bracket | quot | quasi | tildeseq | tilde)
+    while true
+        if c == '('
+            return parse_parentheses!(p, i)
+        elseif c == '"'
+            return parse_quote!(p)
+        elseif c == '{'
+            return parse_brace!(p)
+        elseif isspace(c)
+            return parse_atom!(p, i)
+        end
+        c, i = next(p.code, i)
+    end
+end
 
-function read(str)
-  x = parse_one(str, expr)
-  x[1]
+function parse_space!(p::InsaneParser)
+    i = p.i
+    while true
+        c, i = next(p.code, i)
+        if isspace(c)
+            p.i = i
+        else
+            return
+        end
+    end
+end
+
+function parse_parentheses!(p::InsaneParser, i::Int64)
+    head = p.code[p.i:i-2]
+    p.i = i
+    c, i = next(p.code, i)
+    if 
+
+end
+
+function parse_brace!(p::InsaneParser)
+    exp, p.i = parse(p.code, p.i, greedy=false)
+    return JuliaExpr(exp)
+end
+
+function parse_quote!(p::InsaneParser)
+    exp, p.i = parse(p.code, p.i, greedy=false)
+    return JuliaExpr(exp)
+end
+
+function parse_number!(p::InsaneParser)
+    exp, p.i = parse(p.code, p.i, greedy=false)
+    return JuliaExpr(exp)
+end
+
+function parse_symbol!(p::InsaneParser)
+    exp, p.i = parse(p.code, p.i, greedy=false)
+    return JuliaExpr(exp)
+end
+
+function parse_atom!(p::InsaneParser, i::Int64)
+    name = p.code[p.i:i-1]
+    # TODO: deal with * and : operator
+    atom = if startswith(name, "**")
+        Atom(Symbol("**"), check_identifier(name[3:end]))
+    elseif startswith(name, '*')
+        Atom(Symbol('*'), check_identifier(name[2:end]))
+    elseif endswith(name, ':')
+        Atom(Symbol(':'), check_identifier(name[2:end]))
+    p.i = i
+    return atom
+end
+
+function check_identifier(x)
+    # TODO
+    x
 end

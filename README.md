@@ -5,7 +5,19 @@ Insane.jl
 
 ## installation
 
+```
+Pkg.clone("https://github.com/ylxdzsw/Insane.jl", "Insane")
+```
+
 ## usage
+
+```
+using Insane
+
+λ"""
+(println "hey I'm insane!")
+"""
+```
 
 ## language reference
 
@@ -14,10 +26,11 @@ Insane.jl
 an s-expr is a function call
 
 ```
-(foo)        # foo()
-(foo bar)    # foo(bar)
-(foo *bar)   # foo(bar...)
-(foo **bar)  # foo(;bar...)
+(foo)           # foo()
+(foo bar)       # foo(bar)
+(foo bar: bar)  # foo(bar=bar)
+(foo *bar)      # foo(bar...)
+(foo **bar)     # foo(;bar...)
 ```
 
 ### function definition
@@ -100,25 +113,42 @@ lambda(x (split x '\n'))  # x -> split(x, '\n')
 
 ```
 pipe(foo (split . '\n') (parse Int .) (+ . 4))  # parse(Int, split(foo, '\n')) + 4
-|(foo (+ ..left ..right *.[2:5]))               # tmp = foo; +(tmp.left, tmp.right, tmp[2:5]...)
+|(foo (+ ..left ..right *.))                    # tmp = foo; +(tmp.left, tmp.right, tmp...)
 ```
 
 ### for (auto cps)
 
 ```
-for(i in 1:5 foo(i))  # for i in 1:5 foo(i) end
+for(i in :(1 5) foo(i))  # for i in 1:5 foo(i) end
 ```
 
 ### while (auto cps)
 
 ```
-while((< i 2) (+= i 1))  # while i < 2 i += 1 end
+while((< i 2) =(i (+ i 1)))  # while i < 2 i = i+1 end
 ```
 
 ### try
 
 ```
 try(uncertainty caught anyway)  # try uncertainty catch caught finally anyway end
+```
+
+### range
+
+almost equivalent to call (colon foo bar)
+
+```
+:(2 5)  # 2:5
+```
+
+### and, or
+
+logic operation with early stopping
+
+```
+and(foo bar)  # foo && bar
+or(foo bar)   # foo || bar
 ```
 
 ### break, continue, return
@@ -133,17 +163,51 @@ return(foo)
 
 ```
 type(Foo (x Int) (y Dict{Int, Float64}))
-immutable(Bar x )
+immutable(Bar x f(Bar () (new 1)))
 ```
 
+### number literals
+
+Just like julia. Actually they are parsed by julia parser :)
+
+### string
+
+```
+"this is just a string\n"
+r"and str macros"
+"$("interpolations") just $works"
+```
+
+note: expressions inside interpolations are in *julia*
+
+### embed julia
+
+```
+embed(for i in :(1 3) println(i) end)
+$(continue)
+```
+
+note: only *one* julia expression per $(), use begin clause to combine multiple expressions if nessecery
+
+### typename
+
+```
+(Dict{Int, Int} '('(2 3) '(3 4)))  # Dict{Int, Int}(((2,3), (3,4)))
+```
+
+note: expressions inside curly braces are in *julia*
 
 ### TODO:
 
-module, import, using, const, local, global, type annotation for function/lambda, type assertion
+module, import, using, const, local, global, currying, type annotation for function/lambda, type assertion, list comprehension/generator, array/set/dict literal
 
 ### identifier
 
 identifier can be any sequence of unicode except those:
 
-1. starting with [0-9]
-2. including spaces
+1. starting with [0-9] or `'` or `:` or `*`
+2. including spaces or `(` or `"` or '{' or '.'
+3. ending with `:`
+
+all `-` in identifiers will be translated to `_`, thus `code_native` and `code-native` are the same identifier.
+(of course, minus function `-` not affected)
