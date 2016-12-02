@@ -56,7 +56,7 @@ assign(foo bar)  # foo = bar
 
 ### tuple
 
-tuples are so common that I made it a special form; it almost equivilent to write `(Tuple foo bar)`
+tuples are so common that I made it a special form; it's almost equivilent to write `(Tuple foo bar)`
 
 ```
 tuple(foo bar)  # (foo, bar)
@@ -109,7 +109,7 @@ lambda(x (split x '\n'))  # x -> split(x, '\n')
 λ(() 2)                   # () -> 2
 ```
 
-### pipe
+### pipe (auto assign)
 
 ```
 pipe(foo (split . '\n') (parse Int .) (+ . 4))  # parse(Int, split(foo, '\n')) + 4
@@ -126,6 +126,7 @@ for(i in :(1 5) foo(i))  # for i in 1:5 foo(i) end
 
 ```
 while((< i 2) =(i (+ i 1)))  # while i < 2 i = i+1 end
+loop((foo))                  # while true foo() end
 ```
 
 ### try
@@ -133,6 +134,22 @@ while((< i 2) =(i (+ i 1)))  # while i < 2 i = i+1 end
 ```
 try(uncertainty caught anyway)  # try uncertainty catch caught finally anyway end
 ```
+
+### cond
+
+```
+cond(cond1 act1 cond2 act2 ...)
+```
+
+if provide odd arguments, last argument will be treated as default action
+
+### switch (auto assign)
+
+```
+switch(var val1 action1 val2 action2)
+```
+
+val can be wither a value or a expression that contains `.`, in the latter case var will be assigned to `.`
 
 ### range
 
@@ -151,9 +168,11 @@ and(foo bar)  # foo && bar
 or(foo bar)   # foo || bar
 ```
 
-### break, continue, return
+### true, false, break, continue, return
 
 ```
+true()
+false()
 break()
 continue()
 return(foo)
@@ -195,11 +214,11 @@ note: only *one* julia expression per $(), use begin clause to combine multiple 
 (Dict{Int, Int} '('(2 3) '(3 4)))  # Dict{Int, Int}(((2,3), (3,4)))
 ```
 
-note: expressions inside curly braces are in *julia*
+note: expressions contains curly braces are in *julia*
 
 ### TODO:
 
-module, import, using, const, local, global, currying, type annotation for function/lambda, type assertion, list comprehension/generator, array/set/dict literal
+module, import, using, const, local, global, currying, type annotation and defaults for function/lambda, type assertion, list comprehension/generator, array/set/dict literal
 
 ### identifier
 
