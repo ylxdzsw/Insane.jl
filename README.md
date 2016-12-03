@@ -1,8 +1,6 @@
 Insane.jl
 =========
 
-![Build Status](https://travis-ci.org/ylxdzsw/Insane.jl.svg?branch=master)
-
 A lisp-like syntax for julia that:
 - translate to julia AST at compile time
 - has REPL
@@ -125,11 +123,11 @@ if(cond true false)  # if cond true else false end
 ?(cond true)         # if cond true end, ? is alias of if
 ```
 
-### lambda (auto cps)
+### lambda (auto assign) (auto cps)
 
 ```
-lambda(x (split x '\n'))  # x -> split(x, '\n')
-λ(() 2)                   # () -> 2
+lambda((split . '\n'))  # x -> split(x, '\n')
+λ(() 2)                 # () -> 2
 ```
 
 ### pipe (auto assign)
@@ -144,6 +142,8 @@ pipe(foo (split . '\n') (parse Int .) (+ . 4))  # parse(Int, split(foo, '\n')) +
 ```
 for(i in :(1 5) foo(i))  # for i in 1:5 foo(i) end
 ```
+
+`in` can be replaced by `=` or `∈`
 
 ### while (auto cps)
 
@@ -226,6 +226,14 @@ r"and str macros"
 ```
 
 note: expressions inside interpolations are in *julia*
+
+### range
+
+almost equivalent to write `(colon foo bar)`
+
+```
+:(2 3)  # 2:3
+```
 
 ### embed julia
 

@@ -5,7 +5,7 @@ include("util.jl")
 include("codegen.jl")
 include("repl.jl")
 
-export @λ_str, insane, @insane_load
+export @λ_str, insane, @insane_load, add_special_form
 
 macro λ_str(code)
     insane(code)

@@ -38,8 +38,13 @@ end
 function parse_expr!(p::InsaneParser)
     c, i = next(p.code, p.i)
 
-    if isnumber(c) || c == ':' || c == '\''
+    if isnumber(c)
         return parse_julia!(p)
+    elseif c == ':' || c == '\''
+        c, i = next(p.code, i)
+        if c != '('
+            return parse_julia!(p)
+        end
     elseif c == '{'
         throw(ParseError("expected '{'"))
     elseif c == '*'
