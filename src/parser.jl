@@ -100,6 +100,16 @@ end
 function parse_parentheses!(p::InsaneParser, i::Int64)
     head = p.code[p.i:i-2]
     p.i = i
+
+    if head == "\$" # embed julia
+        try
+            p.i -= 1
+            return parse_julia!(p)
+        catch
+            throw(ParseError("invalid embed julia expression. note: only one expression allowed, use begin clause to combine multiple expressions."))
+        end
+    end
+
     children = Token[]
     while true
         parse_space!(p)

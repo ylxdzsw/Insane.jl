@@ -2,17 +2,25 @@ export add_special_form
 
 SF = Dict{Symbol, Tuple{Bool, Function}}()
 
+catch_continuation(::Token) = false
+catch_continuation(::S_Expr) = SF[x.head][1]
+
 codegen(x::Atom, scope) = all(x->x=='.', x.name) ? scope[length(x.name)] : Symbol(x.name)
 codegen(x::JuliaExpr, scope) = x.expr
-codegen(x::S_Expr, scope) = SF[x.head][2](x.args, scope)
 codegen(x::Affixed, scope) = error("unexpected " * string(x))
 codegen(x::Chained, scope) = Expr(:., codegen(x.base), QuoteNode(Symbol(suffix)))
+codegen(x::S_Expr, scope) = SF[x.head][2](x.args, scope)
+codegen(x::S_Expr, scope, continuation) = begin
+    push!(x.args, S_Expr("begin", continuation))
+    codegen(x, scope)
+end
 
 macro gen(x)
     :(codegen($x, scope))
 end
 
-add_special_form(t, f, cps=false) = SF[t] = cps, f
+add_special_form(t, f)      = SF[t] = false, f
+add_special_form(t, cps, f) = SF[t] = cps, f
 
 add_special_form(Symbol(""), (x, scope) -> begin
     isempty(x) && error("cannot do empty function call; if you need empty tuple, use `'()`")

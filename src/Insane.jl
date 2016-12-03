@@ -4,7 +4,7 @@ include("parser.jl")
 include("util.jl")
 include("codegen.jl")
 
-export λ_str, insane, insane_load
+export @λ_str, insane, @insane_load
 
 macro λ_str(code)
     insane(code)

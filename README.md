@@ -178,11 +178,12 @@ continue()
 return(foo)
 ```
 
-### type, immutable
+### type, immutable, abstract
 
 ```
 type(Foo (x Int) (y Dict{Int, Float64}))
 immutable(Bar x f(Bar () (new 1)))
+abstract(Foo)
 ```
 
 ### number literals
