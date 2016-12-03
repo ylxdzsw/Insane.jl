@@ -19,8 +19,8 @@ macro gen(x)
     :(codegen($x, scope))
 end
 
-add_special_form(t, f)      = SF[t] = false, f
-add_special_form(t, cps, f) = SF[t] = cps, f
+add_special_form(t, f)    = SF[t] = false, f
+add_special_form(t, c, f) = SF[t] = c, f
 
 add_special_form(Symbol(""), (x, scope) -> begin
     isempty(x) && error("cannot do empty function call; if you need empty tuple, use `'()`")

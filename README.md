@@ -11,6 +11,8 @@ Pkg.clone("https://github.com/ylxdzsw/Insane.jl", "Insane")
 
 ## usage
 
+### Inline into julia
+
 ```
 using Insane
 
@@ -19,11 +21,23 @@ using Insane
 """
 ```
 
+### Load external insane file
+
+```
+using Insane
+
+insane_load("relative/path/to/file.insane")
+```
+
+### REPL
+
+Press `<` to enter Insane REPL. Note it won't exit automatically, press backspace to return to julia REPL.
+
 ## language reference
 
 ### function call
 
-an s-expr is a function call
+An s-expr is a function call
 
 ```
 (foo)           # foo()
@@ -129,11 +143,13 @@ while((< i 2) =(i (+ i 1)))  # while i < 2 i = i+1 end
 loop((foo))                  # while true foo() end
 ```
 
-### try
+### try (auto assign)
 
 ```
 try(uncertainty caught anyway)  # try uncertainty catch caught finally anyway end
 ```
+
+exception object will be assigned to `.`
 
 ### cond
 

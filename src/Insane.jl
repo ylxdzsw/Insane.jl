@@ -3,6 +3,7 @@ module Insane
 include("parser.jl")
 include("util.jl")
 include("codegen.jl")
+include("repl.jl")
 
 export @λ_str, insane, @insane_load
 
@@ -20,6 +21,10 @@ end
 macro insane_load(path)
     code = open(readstring, joinpath(Base.source_dir(), path))
     insane(code)
+end
+
+if isdefined(Base, :active_repl)
+    RunInsaneREPL()
 end
 
 end
