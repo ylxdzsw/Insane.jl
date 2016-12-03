@@ -6,8 +6,8 @@ Insane.jl
 A lisp-like syntax for julia that:
 - translate to julia AST at compile time
 - has REPL
-- can be extended by adding custom special form
-- written in itself (bootstrapping)
+- can be extended by adding custom special forms
+- written in itself
 
 ## installation
 
@@ -57,7 +57,10 @@ An s-expr is a function call
 
 ```
 function(foo (x) (+ x 1))  # function foo(x) x+1 end
-f(foo (x *y **z) nothing)  # function foo(x, y...; z...) nothing end, f is alias of function
+f(foo (x *y **z) nothing)  # function foo(x, y...; z...) nothing end
+f(foo{T} ((x T)) nothing)  # function foo{T}(x::T) nothing end
+f(foo ((x Int 4) y: (Any 1) z: (Any (+ y 1))) nothing)
+# function foo(x::Int=4; y::Any=1, z::Any=y+1) nothing end
 ```
 
 ### begin clause
@@ -71,7 +74,7 @@ begin((foo) bar)  # begin foo(); bar end
 
 ```
 assign(foo bar)  # foo = bar
-=((a b) x)       # a,b = x, = is alias of assign
+=((a b) x)       # a,b = x
 ```
 
 ### tuple
@@ -119,7 +122,7 @@ end
 
 ```
 if(cond true false)  # if cond true else false end
-?(cond true)         # if cond true, ? is alias of if
+?(cond true)         # if cond true end, ? is alias of if
 ```
 
 ### lambda (auto cps)
@@ -173,12 +176,16 @@ switch(var val1 action1 val2 action2)
 
 val can be wither a value or a expression that contains `.`, in the latter case var will be assigned to `.`
 
-### range
-
-almost equivalent to call (colon foo bar)
+### macro definition
 
 ```
-:(2 5)  # 2:5
+macro(foo (x) Expr(:+ 1 x))  # macro foo(x) 1+x end
+```
+
+### macro call
+
+```
+@(printf "%d" 39)  # @printf("%d", 39)
 ```
 
 ### and, or
@@ -190,11 +197,9 @@ and(foo bar)  # foo && bar
 or(foo bar)   # foo || bar
 ```
 
-### true, false, break, continue, return
+### break, continue, return
 
 ```
-true()
-false()
 break()
 continue()
 return(foo)
@@ -203,7 +208,7 @@ return(foo)
 ### type, immutable, abstract
 
 ```
-type(Foo (x Int) (y Dict{Int, Float64}))
+type((Foo Super) (x Int) (y Dict{Int, Float64}))
 immutable(Bar x f(Bar () (new 1)))
 abstract(Foo)
 ```
@@ -231,25 +236,22 @@ $(continue)
 
 note: only *one* julia expression per $(), use begin clause to combine multiple expressions if nessecery
 
-### typename
+### type arg
 
 ```
-(Dict{Int, Int} '('(2 3) '(3 4)))  # Dict{Int, Int}(((2,3), (3,4)))
+(Dict{Int Int} '('(2 3) '(3 4)))  # Dict{Int, Int}(((2,3), (3,4)))
 ```
-
-note: expressions contains curly braces are in *julia*
 
 ### TODO:
 
-module, import, using, const, local, global, currying, type annotation and defaults for function/lambda, type assertion, list comprehension/generator, array/set/dict literal
+module, import, using, const, local, global, currying, type annotation and defaults for function/lambda, list comprehension/generator, array/set/dict literal
 
 ### identifier
 
 identifier can be any sequence of unicode except those:
 
-1. starting with [0-9] or `'` or `:` or `*`
-2. including spaces or `(` or `"` or '{' or '.'
-3. ending with `:`
+1. starting with [0-9] or `'` or `*`
+2. including spaces or `(` or `"` or '{' or '.' or ':'
 
 all `-` in identifiers will be translated to `_`, thus `code_native` and `code-native` are the same identifier.
 (of course, minus function `-` is not affected)

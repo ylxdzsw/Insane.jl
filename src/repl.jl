@@ -17,7 +17,7 @@ function process_line(line)
     end
 end
 
-function createInsaneREPL(prompt, name, repl=Base.active_repl, main_mode=repl.interface.modes[1])
+function create_insane_REPL(prompt, name, repl=Base.active_repl, main_mode=repl.interface.modes[1])
     mirepl = isdefined(repl,:mi) ? repl.mi : repl
     # Setup insane panel
     panel = LineEdit.Prompt(prompt;
@@ -46,12 +46,12 @@ function createInsaneREPL(prompt, name, repl=Base.active_repl, main_mode=repl.in
     panel
 end
 
-function RunInsaneREPL(prompt="insane> ", name=:insane, key='<')
+function run_insane_REPL(prompt="λ> ", name=:insane, key='<')
     repl = Base.active_repl
     mirepl = isdefined(repl,:mi) ? repl.mi : repl
     main_mode = mirepl.interface.modes[1]
 
-    panel = createInsaneREPL(prompt, name)
+    panel = create_insane_REPL(prompt, name)
 
     # Install this mode into the main mode
     const insane_keymap = Dict{Any,Any}(

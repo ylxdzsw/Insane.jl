@@ -30,6 +30,11 @@ immutable Chained <: Token
     suffix::String
 end
 
+immutable Curly <: Token
+    head::Symbol
+    tail::Vector{Token}
+end
+
 function parse_expr!(p::InsaneParser)
     c, i = next(p.code, p.i)
 
@@ -54,10 +59,13 @@ function parse_expr!(p::InsaneParser)
         if c == '('
             exp = parse_parentheses!(p, i)
             break
-        elseif c == '"' || c == '{'
-            exp = parse_julia!(p)
+        elseif c == '"'
+            exp = parse_quote!(p, i)
             break
-        elseif isspace(c) || c == ':' || c == '#' || c == ')'
+        elseif c == '{'
+            exp = parse_curly!(p, i)
+            break
+        elseif isspace(c) || c == ':' || c == '#' || c == ')' || c == '}'
             exp = parse_atom!(p, i)
             break
         end
@@ -78,7 +86,7 @@ function parse_expr!(p::InsaneParser)
         end
     end
     
-    isspace(c) || c == ')' || c == '#' ? exp : throw(ParseError("unexpected '$c', spaces are required between expressions"))
+    isspace(c) || c == ')' || c == '#' || c == '}' ? exp : throw(ParseError("unexpected '$c', spaces are required between expressions"))
 end
 
 function parse_space!(p::InsaneParser)
@@ -119,6 +127,34 @@ function parse_parentheses!(p::InsaneParser, i::Int64)
             return S_Expr(head, children)
         else
             push!(children, parse_expr!(p))
+        end
+    end
+end
+
+function parse_quote!(p::InsaneParser, i::Int64)
+    head = p.code[p.i:i-2]
+    p.i = i-1
+    str = parse_julia!(p)
+
+    if isempty(head)
+        str
+    else
+        JuliaExpr(Expr(:macrocall, Symbol(head), str.expr))
+    end
+end
+
+function parse_curly!(p::InsaneParser, i::Int64)
+    head = p.code[p.i:i-2]
+    p.i  = i
+    tail = Token[]
+    while true
+        parse_space!(p)
+        c, i = next(p.code, p.i)
+        if c == '}'
+            p.i = i
+            return Curly(Symbol(head), tail)
+        else
+            push!(tail, parse_expr!(p))
         end
     end
 end

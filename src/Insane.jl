@@ -15,7 +15,7 @@ function insane(code)
     parser = InsaneParser(code)
     parse_space!(parser)
     expr = parse_expr!(parser)
-    codegen(expr, [])
+    codegen!(expr, [])
 end
 
 macro insane_load(path)
@@ -24,7 +24,7 @@ macro insane_load(path)
 end
 
 if isdefined(Base, :active_repl)
-    RunInsaneREPL()
+    run_insane_REPL()
 end
 
 end
