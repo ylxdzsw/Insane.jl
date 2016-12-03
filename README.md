@@ -3,6 +3,12 @@ Insane.jl
 
 ![Build Status](https://travis-ci.org/ylxdzsw/Insane.jl.svg?branch=master)
 
+A lisp-like syntax for julia that:
+- translate to julia AST at compile time
+- has REPL
+- can be extended by adding custom special form
+- written in itself (bootstrapping)
+
 ## installation
 
 ```
@@ -21,7 +27,7 @@ using Insane
 """
 ```
 
-### Load external insane file
+### Load external source file
 
 ```
 using Insane
@@ -246,4 +252,4 @@ identifier can be any sequence of unicode except those:
 3. ending with `:`
 
 all `-` in identifiers will be translated to `_`, thus `code_native` and `code-native` are the same identifier.
-(of course, minus function `-` not affected)
+(of course, minus function `-` is not affected)
