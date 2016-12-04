@@ -123,33 +123,33 @@ if(cond true false)  # if cond true else false end
 ?(cond true)         # if cond true end, ? is alias of if
 ```
 
-### lambda (auto assign) (auto cps)
+### lambda (auto assign)
 
 ```
 lambda((split . '\n'))  # x -> split(x, '\n')
 λ(() 2)                 # () -> 2
 ```
 
-### pipe (auto assign)
+### pipe (auto assign) (vararg)
 
 ```
 pipe(foo (split . '\n') (parse Int .) (+ . 4))  # parse(Int, split(foo, '\n')) + 4
 |(foo (+ ..left ..right *.))                    # tmp = foo; +(tmp.left, tmp.right, tmp...)
 ```
 
-### for (auto cps)
+### for (auto cps) (vararg)
 
 ```
-for(i in :(1 5) foo(i))  # for i in 1:5 foo(i) end
+for(i in :(1 5) (foo i))  # for i in 1:5 foo(i) end
 ```
 
 `in` can be replaced by `=` or `∈`
 
-### while (auto cps)
+### while (auto cps) (vararg)
 
 ```
 while((< i 2) =(i (+ i 1)))  # while i < 2 i = i+1 end
-loop((foo))                  # while true foo() end
+loop((foo) (bar))            # while true foo(); bar() end
 ```
 
 ### try (auto assign)
@@ -238,7 +238,7 @@ almost equivalent to write `(colon foo bar)`
 ### embed julia
 
 ```
-embed(for i in :(1 3) println(i) end)
+julia(for i in :(1 3) println(i) end)
 $(continue)
 ```
 
@@ -258,8 +258,8 @@ module, import, using, const, local, global, currying, type annotation and defau
 
 identifier can be any sequence of unicode except those:
 
-1. starting with [0-9] or `'` or `*`
-2. including spaces or `(` or `"` or '{' or '.' or ':'
+1. starting with `[0-9]` or `'` or `*`
+2. including spaces or `(` or `"` or `{` or `.` or `:`
 
 all `-` in identifiers will be translated to `_`, thus `code_native` and `code-native` are the same identifier.
 (of course, minus function `-` is not affected)

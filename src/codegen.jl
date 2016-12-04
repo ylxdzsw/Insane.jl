@@ -1,9 +1,9 @@
 export add_special_form
 
-SF = Dict{Symbol, Tuple{Bool, Function}}()
+SF = Dict{Symbol, Tuple{Int, Function}}() # Int is the number that desires. if arg num is less than that, continuation will be passed as the last argument
 
-catch_continuation(::Token) = false
-catch_continuation(x::S_Expr) = SF[x.head][1]
+catch_continuation(::Token) = 0
+catch_continuation(x::S_Expr) = SF[x.head][1] == length(x.args) + 1
 
 macro gen(x)
     :(codegen!($x, scope))
@@ -158,7 +158,19 @@ function sf_pipe(x, scope)
     exp
 end
 
-add_special_form(t, f, cps=false) = SF[t] = cps, f
+function sf_for(x, scope)
+    if isa(x[2], Atom) && x[2].name in ("in", "=", "∈")
+        Expr(:for, sf_assign(x[[1,3]], scope), sf_begin(x[4:end], scope))
+    else
+        throw(ParseError("malformed for expression"))
+    end
+end
+
+function sf_while(x, scope)
+    
+end
+
+add_special_form(t, f, cps=0) = SF[t] = cps, f
 
 add_special_form(Symbol("")  , sf_call)
 add_special_form(:function   , sf_function)
@@ -169,11 +181,12 @@ add_special_form(:assign     , sf_assign)
 add_special_form(:(=)        , sf_assign)
 add_special_form(:tuple      , sf_tuple)
 add_special_form(Symbol("'") , sf_tuple)
-add_special_form(:let        , sf_let,    true)
-add_special_form(:l          , sf_let,    true)
+add_special_form(:let        , sf_let, 3)
+add_special_form(:l          , sf_let, 3)
 add_special_form(:if         , sf_if)
 add_special_form(:?          , sf_if)
-add_special_form(:lambda     , sf_lambda, true)
-add_special_form(:λ          , sf_lambda, true)
+add_special_form(:lambda     , sf_lambda)
+add_special_form(:λ          , sf_lambda)
 add_special_form(:pipe       , sf_pipe)
 add_special_form(:|          , sf_pipe)
+add_special_form(:for        , sf_for, 4)
