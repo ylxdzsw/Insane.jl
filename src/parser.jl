@@ -144,7 +144,7 @@ function parse_quote!(p::InsaneParser, i::Int64)
     if isempty(head)
         str
     else
-        JuliaExpr(Expr(:macrocall, Symbol('@', head), str.expr))
+        JuliaExpr(Expr(:macrocall, Symbol('@', head, "_str"), escape_string(str.expr)))
     end
 end
 

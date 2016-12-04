@@ -211,7 +211,7 @@ macro(foo (x) (Expr :call :+ 1 x))  # macro foo(x) :(1+x) end
 @(printf "mo%d" 39)  # @printf("mo%d", 39)
 ```
 
-### and, or
+### and, or (vararg)
 
 logic operation with early stopping
 
@@ -273,9 +273,51 @@ note: only *one* julia expression per $(), use begin clause to combine multiple 
 (Dict{Int Int} '('(2 3) '(3 4)))  # Dict{Int, Int}(((2,3), (3,4)))
 ```
 
+### local, global
+
+```
+local((foo Int) bar)  # local foo::Int, bar
+global(foo bar baz)   # global foo, bar, baz
+```
+
+### const
+
+```
+const(foo 2)   # const foo = 2
+def(foo (bar)) # const foo = bar()
+```
+
+### module (auto cps)
+
+```
+module(Foo =(x 1))        # module Foo x=1 end
+baremodule(Bar def(x 2))  # module Bar const x=2 end
+```
+
+### import, importall, using
+
+```
+import(Base)             # import Base
+import(Base.== Base.!=)  # import Base.==, Base.!=
+import(Base: == !=)      # import Base: ==, !=
+importall(Base)          # importall Base
+importall(Base.Meta)     # importall Base.Meta
+importall(Base: Meta)    # importall Base.Meta
+using(Base)              # using Base
+using(Base.Meta)         # using Base.Meta
+using(Base: Meta)        # using Base: Meta
+```
+
+### ref (auto assign)
+
+```
+ref(foo :(2 end))  # foo[2:end]
+ref(foo (.> . 2))  # foo[foo .> 2]
+```
+
 ### TODO:
 
-module, import, using, const, local, global, currying, type annotation and defaults for function/lambda, list comprehension/generator, array/set/dict literal
+currying, list comprehension/generator, array/set/dict literal
 
 ### identifier
 

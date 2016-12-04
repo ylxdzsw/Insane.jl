@@ -237,6 +237,88 @@ function sf_macrocall(x, scope)
     Expr(:macrocall, Symbol('@', x[1].name), map(x->@gen(x), x[2:end])...)
 end
 
+function sf_and(x, scope)
+    cons(i) = if i == length(x)
+        @gen(x[i])
+    else
+        Expr(:&&, @gen(x[i]), cons(i+1))
+    end
+    cons(1)
+end
+
+function sf_or(x, scope)
+    cons(i) = if i == length(x)
+        @gen(x[i])
+    else
+        Expr(:||, @gen(x[i]), cons(i+1))
+    end
+    cons(1)
+end
+
+function sf_break(x, scope)
+    Expr(:break)
+end
+
+function sf_continue(x, scope)
+    Expr(:continue)
+end
+
+function sf_return(x, scope)
+    Expr(:return, length(x) == 0 ? nothing : @gen(x[1]))
+end
+
+function sf_type(x, scope)
+    gen_type!(x, scope, true)
+end
+
+function sf_immutable(x, scope)
+    gen_type!(x, scope, false)
+end
+
+function sf_abstract(x, scope)
+    Expr(:abstract, @gen(x[1]))
+end
+
+function sf_range(x, scope)
+    Expr(:(:), @gen(x[1]), @gen(x[2]))
+end
+
+function sf_local(x, scope)
+    Expr(:local, map(x->gen_arg!(x, scope), x)...)
+end
+
+function sf_global(x, scope)
+    Expr(:global, map(x->gen_arg!(x, scope), x)...)
+end
+
+function sf_const(x, scope)
+    Expr(:const, sf_assign(x, scope))
+end
+
+function sf_module(x, scope)
+    Expr(:module, true, @gen(x[1]), @gen(x[2]))
+end
+
+function sf_baremodule(x, scope)
+    Expr(:module, false, @gen(x[1]), @gen(x[2]))
+end
+
+function sf_import(x, scope)
+    toplevel(x, scope, :import)
+end
+
+function sf_importall(x, scope)
+    toplevel(x, scope, :importall)
+end
+
+function sf_using(x, scope)
+    toplevel(x, scope, :using)
+end
+
+function sf_ref(x, scope)
+    Expr(:ref, @gen(x[1]), @gen(x[2]))
+end
+
 add_special_form(t, f, cps=0) = SF[t] = cps, f
 
 add_special_form(Symbol("")        , sf_call)
@@ -267,3 +349,23 @@ add_special_form(:macrodef         , sf_macrodef)
 add_special_form(:macro            , sf_macrodef)
 add_special_form(:macrocall        , sf_macrocall)
 add_special_form(Symbol("@")       , sf_macrocall)
+add_special_form(:and              , sf_and)
+add_special_form(:or               , sf_or)
+add_special_form(:break            , sf_break)
+add_special_form(:continue         , sf_continue)
+add_special_form(:return           , sf_return)
+add_special_form(:type             , sf_type)
+add_special_form(:immutable        , sf_immutable)
+add_special_form(:abstract         , sf_abstract)
+add_special_form(:range            , sf_range)
+add_special_form(:(:)              , sf_range)
+add_special_form(:local            , sf_local)
+add_special_form(:global           , sf_global)
+add_special_form(:const            , sf_const)
+add_special_form(:def              , sf_const)
+add_special_form(:module           , sf_module,     2)
+add_special_form(:baremodule       , sf_baremodule, 2)
+add_special_form(:import           , sf_import)
+add_special_form(:importall        , sf_importall)
+add_special_form(:using            , sf_using)
+add_special_form(:ref              , sf_ref)

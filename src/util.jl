@@ -15,3 +15,29 @@ else
     throw(ParseError("malformed function arg"))
 end
 
+gen_type!(x, scope, mutable) = begin
+    Expr(:type, mutable, if isa(x[1], S_Expr)
+        Expr(:<:, map(x->codegen!(x, scope), x[1].args)...)
+    else
+        codegen!(x[1], scope)
+    end, Expr(:block, map(x->begin
+        (isa(x, Atom) || isa(x, S_Expr) && x.head == Symbol("") ? gen_arg! : codegen!)(x, scope)
+    end, x[2:end])...))
+end
+
+flat_chain(x::Atom, scope) = [codegen!(x, scope)]
+flat_chain(x::Chained, scope) = begin
+    p = flat_chain(x.base, scope)
+    push!(p, Symbol(x.suffix))
+end
+
+toplevel(x, scope, key) = if isa(x[1], Affixed) && x[1].affix == 0x02
+    prefix = codegen!(x[1].token, scope)
+    Expr(:toplevel, map(x->begin
+        Expr(key, prefix, codegen!(x, scope))
+    end, x[2:end])...)
+else
+    Expr(:toplevel, map(x->begin
+        Expr(key, flat_chain(x, scope)...)
+    end, x)...)
+end
