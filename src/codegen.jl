@@ -1,9 +1,13 @@
-export add_special_form
+export add_special_form, codegen!
 
 SF = Dict{Symbol, Tuple{Int, Function}}() # Int is the number that desires. if arg num is less than that, continuation will be passed as the last argument
 
-catch_continuation(::Token) = 0
-catch_continuation(x::S_Expr) = SF[x.head][1] == length(x.args) + 1
+catch_continuation(::Token) = false
+catch_continuation(x::S_Expr) = if SF[x.head][1] > length(x.args) + 1
+    throw(ParseError("Too few arguments for $(x.head) expression"))
+else
+    SF[x.head][1] == length(x.args) + 1
+end
 
 macro gen(x)
     :(codegen!($x, scope))
@@ -167,26 +171,99 @@ function sf_for(x, scope)
 end
 
 function sf_while(x, scope)
-    
+    Expr(:while, @gen(x[1]), sf_begin(x[2:end], scope))
+end
+
+function sf_loop(x, scope)
+    unshift!(x, JuliaExpr(true))
+    sf_while(x, scope)
+end
+
+function sf_try(x, scope)
+    e = gensym()
+    unshift!(scope, e)
+    caught = @gen(x[2])
+    shift!(scope)
+    exp = Expr(:try, @gen(x[1]), e, caught)
+    if length(x) == 3
+        push!(exp.args, @gen(x[3]))
+    end
+    exp
+end
+
+function sf_cond(x, scope)
+    cons(i) = if i+1 > length(x) # default
+        @gen(x[i])
+    elseif i+1 == length(x) # last
+        Expr(:if, @gen(x[i]), @gen(x[i+1]))
+    else
+        Expr(:if, @gen(x[i]), @gen(x[i+1]), cons(i+2))
+    end
+    cons(1)
+end
+
+function sf_switch(x, scope)
+    this = gensym()
+    exp  = Expr(:block, Expr(:(=), this, @gen(x[1])))
+    unshift!(scope, this)
+    comp(x) = if isa(x, Affixed) && x.affix == 0x00
+        sf_call(Token[Atom("=="), Atom("."), x.token], scope)
+    else
+        @gen(x)
+    end
+    cons(i) = if i+1 > length(x) # default
+        @gen(x[i])
+    elseif i+1 == length(x) # last
+        Expr(:if, comp(x[i]), @gen(x[i+1]))
+    else
+        Expr(:if, comp(x[i]), @gen(x[i+1]), cons(i+2))
+    end
+    push!(exp.args, cons(2))
+    shift!(scope)
+    exp
+end
+
+function sf_return_star(x, scope)
+    this = gensym()
+    Expr(:block, Expr(:(=), this, @gen(x[1])), @gen(x[2]).args..., this)
+end
+
+function sf_macrodef(x, scope)
+    Expr(:macro, Expr(:call, @gen(x[1]), map(x->@gen(x), x[2].args)...),
+                 sf_begin(x[3:end], scope))
+end
+
+function sf_macrocall(x, scope)
+    Expr(:macrocall, Symbol('@', x[1].name), map(x->@gen(x), x[2:end])...)
 end
 
 add_special_form(t, f, cps=0) = SF[t] = cps, f
 
-add_special_form(Symbol("")  , sf_call)
-add_special_form(:function   , sf_function)
-add_special_form(:f          , sf_function)
-add_special_form(:begin      , sf_begin)
-add_special_form(:>          , sf_begin)
-add_special_form(:assign     , sf_assign)
-add_special_form(:(=)        , sf_assign)
-add_special_form(:tuple      , sf_tuple)
-add_special_form(Symbol("'") , sf_tuple)
-add_special_form(:let        , sf_let, 3)
-add_special_form(:l          , sf_let, 3)
-add_special_form(:if         , sf_if)
-add_special_form(:?          , sf_if)
-add_special_form(:lambda     , sf_lambda)
-add_special_form(:λ          , sf_lambda)
-add_special_form(:pipe       , sf_pipe)
-add_special_form(:|          , sf_pipe)
-add_special_form(:for        , sf_for, 4)
+add_special_form(Symbol("")        , sf_call)
+add_special_form(:function         , sf_function)
+add_special_form(:f                , sf_function)
+add_special_form(:begin            , sf_begin)
+add_special_form(:>                , sf_begin)
+add_special_form(:assign           , sf_assign)
+add_special_form(:(=)              , sf_assign)
+add_special_form(:tuple            , sf_tuple)
+add_special_form(Symbol("'")       , sf_tuple)
+add_special_form(:let              , sf_let, 3)
+add_special_form(:l                , sf_let, 3)
+add_special_form(:if               , sf_if)
+add_special_form(:?                , sf_if)
+add_special_form(:lambda           , sf_lambda)
+add_special_form(:λ                , sf_lambda)
+add_special_form(:pipe             , sf_pipe)
+add_special_form(:|                , sf_pipe)
+add_special_form(:for              , sf_for,   4)
+add_special_form(:while            , sf_while, 2)
+add_special_form(:loop             , sf_loop,  1)
+add_special_form(:try              , sf_try)
+add_special_form(:cond             , sf_cond)
+add_special_form(:switch           , sf_switch)
+add_special_form(Symbol("return*") , sf_return_star, 2)
+add_special_form(:macrodef         , sf_macrodef)
+add_special_form(:macro            , sf_macrodef)
+add_special_form(:macrocall        , sf_macrocall)
+add_special_form(Symbol("@")       , sf_macrocall)

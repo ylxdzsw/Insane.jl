@@ -5,10 +5,10 @@ include("util.jl")
 include("codegen.jl")
 include("repl.jl")
 
-export @λ_str, insane, @insane_load, add_special_form
+export @λ_str, insane, @insane_load
 
 macro λ_str(code)
-    insane(code)
+    insane(">($code)") |> esc
 end
 
 function insane(code)
@@ -20,7 +20,7 @@ end
 
 macro insane_load(path)
     code = open(readstring, joinpath(Base.source_dir(), path))
-    insane(code)
+    insane(">($code)") |> esc
 end
 
 if isdefined(Base, :active_repl)

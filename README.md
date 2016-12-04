@@ -156,6 +156,8 @@ loop((foo) (bar))            # while true foo(); bar() end
 
 ```
 try(uncertainty caught anyway)  # try uncertainty catch caught finally anyway end
+try(uncertainty (showerror .))  # try uncertainty catch e showerr(e) end
+try(uncertainty >() (close x))  # try uncertainty finally close(x) end
 ```
 
 exception object will be assigned to `.`
@@ -166,26 +168,47 @@ exception object will be assigned to `.`
 cond(cond1 act1 cond2 act2 ...)
 ```
 
-if provide odd arguments, last argument will be treated as default action
+if provide odd number of arguments, last argument will be treated as default action
 
 ### switch (auto assign)
 
 ```
-switch(var val1 action1 val2 action2)
+switch(var exp1 action1 *val2 action2 ...)
 ```
 
-val can be wither a value or a expression that contains `.`, in the latter case var will be assigned to `.`
+`*val` is a short hand for `(== . val)`
+
+`.` will be set to `var` in both vals and actions. 
+
+if provide odd number of arguments, last argument will be treated as default action
+
+### return* (auto cps)
+
+```
+>(
+	return*(=(x (Dict)))
+	(setindex! x value key)
+)
+
+===
+
+begin
+	tmp = x = Dict()
+	x[key] = value
+	tmp
+end
+```
 
 ### macro definition
 
 ```
-macro(foo (x) Expr(:+ 1 x))  # macro foo(x) 1+x end
+macro(foo (x) (Expr :call :+ 1 x))  # macro foo(x) :(1+x) end
 ```
 
 ### macro call
 
 ```
-@(printf "%d" 39)  # @printf("%d", 39)
+@(printf "mo%d" 39)  # @printf("mo%d", 39)
 ```
 
 ### and, or

@@ -144,7 +144,7 @@ function parse_quote!(p::InsaneParser, i::Int64)
     if isempty(head)
         str
     else
-        JuliaExpr(Expr(:macrocall, Symbol(head), str.expr))
+        JuliaExpr(Expr(:macrocall, Symbol('@', head), str.expr))
     end
 end
 
@@ -166,13 +166,21 @@ end
 
 function parse_julia!(p::InsaneParser)
     exp, p.i = parse(p.code, p.i, greedy=false)
+    if isa(exp, Symbol)
+        exp = QuoteNode(exp)
+    end
     return JuliaExpr(exp)
 end
 
 function parse_atom!(p::InsaneParser, i::Int64)
-    p.code[p.i:i-2] == "-" && return Atom("-") # special rule for the '-' funciton
-    name = replace(p.code[p.i:i-2], '-', '_')
+    name = p.code[p.i:i-2]
     p.i = i-1
+
+    name == "-"     && return Atom("-")
+    name == "true"  && return JuliaExpr(true)
+    name == "false" && return JuliaExpr(false)
+
+    name = replace(name, '-', '_')
 
     m = match(r"^([^\.]+|\.+)(\.[^.]+)*$", name)
 
