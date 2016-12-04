@@ -1,21 +1,15 @@
 Insane.jl
 =========
 
-A lisp-like syntax for julia that:
-- translate to julia AST at compile time
-- has REPL
-- can be extended by adding custom special forms
-- written in itself
-
-## installation
+## Installation
 
 ```
 Pkg.clone("https://github.com/ylxdzsw/Insane.jl", "Insane")
 ```
 
-## usage
+## Usage
 
-### Inline into julia
+### inline into julia
 
 ```
 using Insane
@@ -25,7 +19,7 @@ using Insane
 """
 ```
 
-### Load external source file
+### load external source file
 
 ```
 using Insane
@@ -37,7 +31,7 @@ insane_load("relative/path/to/file.insane")
 
 Press `<` to enter Insane REPL. Note it won't exit automatically, press backspace to return to julia REPL.
 
-## language reference
+## Language reference
 
 ### function call
 
@@ -294,7 +288,7 @@ module(Foo =(x 1))        # module Foo x=1 end
 baremodule(Bar def(x 2))  # module Bar const x=2 end
 ```
 
-### import, importall, using
+### import, importall, using (vararg)
 
 ```
 import(Base)             # import Base
@@ -315,10 +309,6 @@ ref(foo :(2 end))  # foo[2:end]
 ref(foo (.> . 2))  # foo[foo .> 2]
 ```
 
-### TODO:
-
-currying, list comprehension/generator, array/set/dict literal
-
 ### identifier
 
 identifier can be any sequence of unicode except those:
@@ -328,3 +318,9 @@ identifier can be any sequence of unicode except those:
 
 all `-` in identifiers will be translated to `_`, thus `code_native` and `code-native` are the same identifier.
 (of course, minus function `-` is not affected)
+
+## TODO:
+
+- currying
+- list comprehension/generator
+- array/set/dict literal
