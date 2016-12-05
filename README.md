@@ -310,6 +310,12 @@ ref(foo (.> . 2))  # foo[foo .> 2]
 ref(Int 2 3 4 5)   # Int[2,3,4,5]
 ```
 
+### quote (vararg)
+
+```
+`(=(foo bar))  # :(foo = bar)
+```
+
 ### identifier
 
 identifier can be any sequence of unicode except those:

@@ -166,9 +166,6 @@ end
 
 function parse_julia!(p::InsaneParser)
     exp, p.i = parse(p.code, p.i, greedy=false)
-    if isa(exp, Symbol)
-        exp = QuoteNode(exp)
-    end
     return JuliaExpr(exp)
 end
 

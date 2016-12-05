@@ -14,7 +14,7 @@ macro gen(x)
 end
 
 codegen!(x::Atom, scope) = all(x->x=='.', x.name) ? scope[length(x.name)] : Symbol(x.name)
-codegen!(x::JuliaExpr, scope) = x.expr
+codegen!(x::JuliaExpr, scope) = QuoteNode(x.expr)
 codegen!(x::Affixed, scope) = error("unexpected " * string(x))
 codegen!(x::Chained, scope) = Expr(:., @gen(x.base), QuoteNode(Symbol(x.suffix)))
 codegen!(x::Curly, scope) = Expr(:curly, x.head, map(x->@gen(x), x.tail)...)
@@ -319,6 +319,10 @@ function sf_ref(x, scope)
     Expr(:ref, map(x->@gen(x), x)...)
 end
 
+function sf_quote(x, scope)
+    Expr(:quote, sf_begin(x, scope))
+end
+
 add_special_form(t, f, cps=0) = SF[t] = cps, f
 
 add_special_form(Symbol("")        , sf_call)
@@ -369,3 +373,5 @@ add_special_form(:import           , sf_import)
 add_special_form(:importall        , sf_importall)
 add_special_form(:using            , sf_using)
 add_special_form(:ref              , sf_ref)
+add_special_form(:quote            , sf_quote)
+add_special_form(Symbol("`")       , sf_quote)
