@@ -284,11 +284,11 @@ function sf_range(x, scope)
 end
 
 function sf_local(x, scope)
-    Expr(:local, map(x->gen_arg!(x, scope), x)...)
+    Expr(:local, map(x->@gen(x), x)...)
 end
 
 function sf_global(x, scope)
-    Expr(:global, map(x->gen_arg!(x, scope), x)...)
+    Expr(:global, map(x->@gen(x), x)...)
 end
 
 function sf_const(x, scope)
@@ -316,7 +316,7 @@ function sf_using(x, scope)
 end
 
 function sf_ref(x, scope)
-    Expr(:ref, @gen(x[1]), @gen(x[2]))
+    Expr(:ref, map(x->@gen(x), x)...)
 end
 
 add_special_form(t, f, cps=0) = SF[t] = cps, f

@@ -302,11 +302,12 @@ using(Base.Meta)         # using Base.Meta
 using(Base: Meta)        # using Base: Meta
 ```
 
-### ref (auto assign)
+### ref (auto assign) (vararg)
 
 ```
 ref(foo :(2 end))  # foo[2:end]
 ref(foo (.> . 2))  # foo[foo .> 2]
+ref(Int 2 3 4 5)   # Int[2,3,4,5]
 ```
 
 ### identifier
@@ -323,4 +324,4 @@ all `-` in identifiers will be translated to `_`, thus `code_native` and `code-n
 
 - currying
 - list comprehension/generator
-- array/set/dict literal
+- array/set/dict literal # currently array can be constructed by `ref`
