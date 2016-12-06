@@ -128,7 +128,8 @@ lambda((split . '\n'))  # x -> split(x, '\n')
 
 ```
 pipe(foo (split . '\n') (parse Int .) (+ . 4))  # parse(Int, split(foo, '\n')) + 4
-|(foo (+ ..left ..right *.))                    # tmp = foo; +(tmp.left, tmp.right, tmp...)
+.(foo (+ ..left ..right *.))                    # tmp = foo; +(tmp.left, tmp.right, tmp...)
+.(foo *bar *(higher-order factory))             # *foo is equal to (foo .)
 ```
 
 ### for (auto cps) (vararg)
@@ -196,7 +197,7 @@ end
 ### macro definition
 
 ```
-macro(foo (x) (Expr :call :+ 1 x))  # macro foo(x) :(1+x) end
+macro(foo (x) `((+ 1 x)))  # macro foo(x) :(1+x) end
 ```
 
 ### macro call
@@ -211,7 +212,9 @@ logic operation with early stopping
 
 ```
 and(foo bar)  # foo && bar
+&(foo bar)    # foo && bar
 or(foo bar)   # foo || bar
+|(foo bar)    # foo || bar
 ```
 
 ### break, continue, return
