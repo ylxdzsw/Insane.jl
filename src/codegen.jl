@@ -13,6 +13,15 @@ macro gen(x)
     :(codegen!($x, scope))
 end
 
+function extend(f, scope, sym)
+    unshift!(scope, sym)
+    try
+        f()
+    finally
+        shift!(scope)
+    end
+end
+
 codegen!(x::Atom, scope) = all(x->x=='.', x.name) ? scope[length(x.name)] : Symbol(x.name)
 codegen!(x::JuliaExpr, scope) = QuoteNode(x.expr)
 codegen!(x::Affixed, scope) = error("unexpected " * string(x))
@@ -128,10 +137,9 @@ end
 function sf_lambda(x, scope)
     if length(x) == 1
         this = gensym()
-        unshift!(scope, this)
-        body = @gen(x[1])
-        shift!(scope)
-        Expr(:->, Expr(:tuple, this), body)
+        extend(scope, this) do
+            Expr(:->, Expr(:tuple, this), @gen(x[1]))
+        end
     else
         args = []
         for i in x[1].args
@@ -154,12 +162,12 @@ end
 function sf_pipe(x, scope)
     this = gensym()
     exp  = Expr(:block, Expr(:(=), this, @gen(shift!(x))))
-    unshift!(scope, this)
-    for i in x
-        push!(exp.args, Expr(:(=), this, isa(i, Affixed) && i.affix == 0x00 ?
-            sf_call(Token[i.token, Atom(".")], scope) : @gen(i)))
+    extend(scope, this) do
+        for i in x
+            push!(exp.args, Expr(:(=), this, isa(i, Affixed) && i.affix == 0x00 ?
+                sf_call(Token[i.token, Atom(".")], scope) : @gen(i)))
+        end
     end
-    shift!(scope)
     exp
 end
 
@@ -169,6 +177,17 @@ function sf_for(x, scope)
     else
         throw(ParseError("malformed for expression"))
     end
+end
+
+function sf_each(x, scope)
+    this = gensym()
+    body = extend(scope, this) do
+        map(x[2:end]) do i
+            Expr(:(=), this, isa(i, Affixed) && i.affix == 0x00 ?
+                sf_call(Token[i.token, Atom(".")], scope) : @gen(i))
+        end
+    end
+    Expr(:for, Expr(:(=), this, @gen(x[1])), Expr(:block, body...))
 end
 
 function sf_while(x, scope)
@@ -182,9 +201,9 @@ end
 
 function sf_try(x, scope)
     e = gensym()
-    unshift!(scope, e)
-    caught = @gen(x[2])
-    shift!(scope)
+    extend(scope, e) do
+        caught = @gen(x[2])
+    end
     exp = Expr(:try, @gen(x[1]), e, caught)
     if length(x) == 3
         push!(exp.args, @gen(x[3]))
@@ -378,3 +397,4 @@ add_special_form(:using            , sf_using)
 add_special_form(:ref              , sf_ref)
 add_special_form(:quote            , sf_quote)
 add_special_form(Symbol("`")       , sf_quote)
+add_special_form(:each             , sf_each)
