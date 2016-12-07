@@ -140,7 +140,7 @@ for(i in :(1 5) (foo i))  # for i in 1:5 foo(i) end
 
 `in` can be replaced by `=` or `∈`
 
-### each (auto assign) (vararg)
+### each (auto cps) (auto assign) (vararg)
 
 ```
 each(foo a b c)  # abbr for `for(tmp in foo .(tmp a b c))`
