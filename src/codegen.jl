@@ -23,7 +23,7 @@ function extend(f, scope, sym)
 end
 
 codegen!(x::Atom, scope) = all(x->x=='.', x.name) ? scope[length(x.name)] : Symbol(x.name)
-codegen!(x::JuliaExpr, scope) = QuoteNode(x.expr)
+codegen!(x::JuliaExpr, scope) = x.expr
 codegen!(x::Affixed, scope) = error("unexpected " * string(x))
 codegen!(x::Chained, scope) = Expr(:., @gen(x.base), QuoteNode(Symbol(x.suffix)))
 codegen!(x::Curly, scope) = Expr(:curly, x.head, map(x->@gen(x), x.tail)...)
@@ -164,8 +164,7 @@ function sf_pipe(x, scope)
     exp  = Expr(:block, Expr(:(=), this, @gen(shift!(x))))
     extend(scope, this) do
         for i in x
-            push!(exp.args, Expr(:(=), this, isa(i, Affixed) && i.affix == 0x00 ?
-                sf_call(Token[i.token, Atom(".")], scope) : @gen(i)))
+            push!(exp.args, dispatch_pipe!(i, scope, this))
         end
     end
     exp
@@ -182,10 +181,7 @@ end
 function sf_each(x, scope)
     this = gensym()
     body = extend(scope, this) do
-        map(x[2:end]) do i
-            Expr(:(=), this, isa(i, Affixed) && i.affix == 0x00 ?
-                sf_call(Token[i.token, Atom(".")], scope) : @gen(i))
-        end
+        map(x->dispatch_pipe!(x, scope, this), x[2:end])
     end
     Expr(:for, Expr(:(=), this, @gen(x[1])), Expr(:block, body...))
 end

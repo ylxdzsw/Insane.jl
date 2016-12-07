@@ -13,6 +13,7 @@ end
 
 immutable JuliaExpr <: Token
     expr::Any
+    raw::Bool
 end
 
 immutable S_Expr <: Token
@@ -116,8 +117,8 @@ function parse_parentheses!(p::InsaneParser, i::Int64)
 
     if head == "\$" || head == "julia" # embed julia
         try
-            p.i -= 1
-            return parse_julia!(p)
+            exp, p.i = parse(p.code, p.i-1, greedy=false)
+            return JuliaExpr(exp, true)
         catch
             throw(ParseError("invalid embed julia expression. note: only one expression allowed, use begin clause to combine multiple expressions."))
         end
@@ -144,7 +145,7 @@ function parse_quote!(p::InsaneParser, i::Int64)
     if isempty(head)
         str
     else
-        JuliaExpr(Expr(:macrocall, Symbol('@', head, "_str"), escape_string(str.expr)))
+        JuliaExpr(Expr(:macrocall, Symbol('@', head, "_str"), escape_string(str.expr)), true)
     end
 end
 
@@ -166,7 +167,7 @@ end
 
 function parse_julia!(p::InsaneParser)
     exp, p.i = parse(p.code, p.i, greedy=false)
-    return JuliaExpr(exp)
+    return JuliaExpr(exp, false)
 end
 
 function parse_atom!(p::InsaneParser, i::Int64)
@@ -174,8 +175,8 @@ function parse_atom!(p::InsaneParser, i::Int64)
     p.i = i-1
 
     name == "-"     && return Atom("-")
-    name == "true"  && return JuliaExpr(true)
-    name == "false" && return JuliaExpr(false)
+    name == "true"  && return JuliaExpr(true, false)
+    name == "false" && return JuliaExpr(false, false)
 
     name = replace(name, '-', '_')
 

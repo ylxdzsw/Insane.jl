@@ -25,6 +25,18 @@ gen_type!(x, scope, mutable) = begin
     end, x[2:end])...))
 end
 
+dispatch_pipe!(x, scope, this) = if isa(x, Affixed) && x.affix == 0x00
+    Expr(:(=), this, sf_call(Token[x.token, Atom(".")], scope))
+elseif isa(x, Affixed) && x.affix == 0x01
+    if isa(x.token, Affixed) && x.token.affix == 0x00
+        sf_call(Token[x.token.token, Atom(".")], scope)
+    else
+        codegen!(x.token, scope)
+    end
+else
+    Expr(:(=), this, codegen!(x, scope))
+end
+
 flat_chain(x::Atom, scope) = [codegen!(x, scope)]
 flat_chain(x::Chained, scope) = begin
     p = flat_chain(x.base, scope)

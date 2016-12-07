@@ -130,6 +130,7 @@ lambda((split . '\n'))  # x -> split(x, '\n')
 pipe(foo (split . '\n') (parse Int .) (+ . 4))  # parse(Int, split(foo, '\n')) + 4
 .(foo (+ ..left ..right *.))                    # tmp = foo; +(tmp.left, tmp.right, tmp...)
 .(foo *bar *(higher-order factory))             # *foo is equal to (foo .)
+.(foo ***bar **(higher-order factory))          # **foo is equal to >(foo .), and ***foo means **(foo .)
 ```
 
 ### for (auto cps) (vararg)
