@@ -25,7 +25,7 @@ macro insane_load(path)
     insane(">($code)") |> esc
 end
 
-if isdefined(Base, :active_repl)
+__init__() = if isdefined(Base, :active_repl)
     run_insane_REPL()
 end
 
