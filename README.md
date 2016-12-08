@@ -145,6 +145,7 @@ for(i in :(1 5) (foo i))  # for i in 1:5 foo(i) end
 
 ```
 each(foo a b c)  # abbr for `for(tmp in foo .(tmp a b c))`
+∀(foo *bar)      # ∀ is alias, and star notations are the same as `pipe`
 ```
 
 ### while (auto cps) (vararg)
