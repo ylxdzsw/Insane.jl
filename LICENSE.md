@@ -1,4 +1,4 @@
-The Restful.jl package is licensed under the MIT License:
+The Insane.jl package is licensed under the MIT License:
 
 > Copyright (c) 2016: Zhang ShiWei.
 >
