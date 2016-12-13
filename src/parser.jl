@@ -53,7 +53,7 @@ function parse_expr!(p::InsaneParser)
         if c == '*'
             p.i += 2
             return Affixed(0x01, parse_expr!(p))
-        else
+        elseif !isspace(c)
             p.i += 1
             return Affixed(0x00, parse_expr!(p))
         end

@@ -136,16 +136,14 @@ pipe(foo (split . '\n') (parse Int .) (+ . 4))  # parse(Int, split(foo, '\n')) +
 ### for (auto cps) (vararg)
 
 ```
-for(i in :(1 5) (foo i))  # for i in 1:5 foo(i) end
+for(i in :(1 5) (foo i))    # for i in 1:5 foo(i) end
+∀(i ∈ foo (do something))  # ∀ is alias
 ```
 
-`in` can be replaced by `=` or `∈`
-
-### each (auto cps) (auto assign) (vararg)
+### each (auto assign) (vararg)
 
 ```
-each(foo a b c)  # abbr for `for(tmp in foo .(tmp a b c))`
-∀(foo *bar)      # ∀ is alias, and star notations are the same as `pipe`
+each(foo a **b *c)  # abbr for `for(tmp in foo .(tmp a **b *c))`
 ```
 
 ### while (auto cps) (vararg)
@@ -236,7 +234,7 @@ return(foo)
 ### type, immutable, abstract
 
 ```
-type((Foo Super) (x Int) (y Dict{Int, Float64}))
+type((Foo Super) (x Int) (y Dict{Int Float64}))
 immutable(Bar x f(Bar () (new 1)))
 abstract(Foo)
 ```
@@ -266,7 +264,7 @@ almost equivalent to write `(colon foo bar)`
 ### embed julia
 
 ```
-julia(for i in :(1 3) println(i) end)
+julia(for i in 1:3 println(i) end)
 $(continue)
 ```
 
