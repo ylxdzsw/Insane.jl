@@ -11,7 +11,7 @@ Some of this code is derived from Cxx.jl.
 
 function process_line(line)
     try
-        eval(Main, insane(line*"\n"))
+        QuoteNode(eval(Main, insane(line*"\n")))
     catch e
         print_with_color(:red, STDERR, "ERROR: ", sprint(showerror, e), "\n")
     end
